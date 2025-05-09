@@ -25,13 +25,13 @@ A secure, privacy-focused marketplace built on the Tor network.
 ./run_app.sh
 ```
 
-2. Open your browser and navigate to `http://localhost:3000`
+2. Open your browser and navigate to `http://localhost:3001`
 
 3. You can also view specific pages:
-   - Home: http://localhost:3000/
-   - Login: http://localhost:3000/login
-   - Register: http://localhost:3000/register
-   - Products: http://localhost:3000/products
+   - Home: http://localhost:3001/
+   - Login: http://localhost:3001/login
+   - Register: http://localhost:3001/register
+   - Products: http://localhost:3001/products
 
 ### Manual Start
 

@@ -20,7 +20,7 @@ async fn main() {
         .nest_service("/static", ServeDir::new(PathBuf::from("static")));
 
     // Run the server
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
     println!("Server running on http://{}", addr);
     axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), app)
         .await

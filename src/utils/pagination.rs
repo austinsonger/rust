@@ -1,51 +1,30 @@
-// Original author: Christian Gill (@gillchristian)
-// From: https://gist.github.com/gillchristian/db76e712cc02bff620b86f0cd2bfb691
-
-use async_trait::async_trait;
-use axum::extract::{FromRequestParts, Query};
-use axum::http::{request::Parts, StatusCode};
-use serde::Deserialize;
+use axum::extract::Query;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize)]
-struct Limit {
-    limit: u32,
-}
-
-impl Default for Limit {
-    fn default() -> Self {
-        Self { limit: 100 }
-    }
-}
-
-#[derive(Debug, Clone, Default, Deserialize)]
-struct Offset {
-    offset: u64,
-}
-
-#[derive(Debug, Clone)]
-pub struct Pagination {
-    /// The number of documents to skip before counting.
-    pub offset: u64,
-    /// The maximum number of documents to query.
+pub struct PaginationParams {
+    #[serde(default = "default_page")]
+    pub page: u64,
+    #[serde(default = "default_limit")]
     pub limit: u32,
 }
 
-#[async_trait]
-impl<S> FromRequestParts<S> for Pagination
-where
-    S: Send + Sync,
-{
-    type Rejection = (StatusCode, &'static str);
+fn default_page() -> u64 {
+    1
+}
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let Query(Limit { limit }) = Query::<Limit>::from_request_parts(parts, state)
-            .await
-            .unwrap_or_default();
+fn default_limit() -> u32 {
+    20
+}
 
-        let Query(Offset { offset }) = Query::<Offset>::from_request_parts(parts, state)
-            .await
-            .unwrap_or_default();
+#[derive(Debug, Clone, Serialize)]
+pub struct PaginationInfo {
+    pub total: u64,
+    pub page: u64,
+    pub limit: u32,
+    pub pages: u64,
+}
 
-        Ok(Self { limit, offset })
-    }
+pub fn calculate_offset(page: u64, limit: u32) -> u64 {
+    (page - 1) * limit as u64
 }

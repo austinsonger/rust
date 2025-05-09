@@ -1,12 +1,3 @@
-pub mod authenticate_request;
-pub mod custom_response;
-pub mod date;
-pub mod db_operations;
-pub mod error_context;
-pub mod models;
+pub mod dry_example;
 pub mod pagination;
-pub mod response_formatter;
-pub mod route_handlers;
-pub mod to_object_id;
-pub mod token;
 pub mod validation;

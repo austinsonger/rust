@@ -1,27 +1,19 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
-use bcrypt::BcryptError;
+use diesel::result::Error as DieselError;
 use serde_json::json;
+use std::error::Error as StdError;
 use tokio::task::JoinError;
-use wither::bson;
-use wither::mongodb::error::Error as MongoError;
-use wither::WitherError;
 
 #[derive(thiserror::Error, Debug)]
 #[error("...")]
 pub enum Error {
-    #[error("{0}")]
-    Wither(#[from] WitherError),
+    #[error("Database error: {0}")]
+    DatabaseError(String),
 
-    #[error("{0}")]
-    Mongo(#[from] MongoError),
-
-    #[error("Error parsing ObjectID {0}")]
-    ParseObjectID(String),
-
-    #[error("{0}")]
-    SerializeMongoResponse(#[from] bson::de::Error),
+    #[error("Error parsing ID {0}")]
+    ParseIDError(String),
 
     #[error("{0}")]
     Authenticate(#[from] AuthenticateError),
@@ -35,15 +27,33 @@ pub enum Error {
     #[error("{0}")]
     RunSyncTask(#[from] JoinError),
 
-    #[error("{0}")]
-    HashPassword(#[from] BcryptError),
+    #[error("Password hashing error: {0}")]
+    HashPassword(String),
+
+    #[error("Encryption error: {0}")]
+    EncryptionError(String),
+
+    #[error("Decryption error: {0}")]
+    DecryptionError(String),
+
+    #[error("PGP error: {0}")]
+    PGPError(String),
+
+    #[error("Cryptocurrency error: {0}")]
+    CryptoError(String),
+
+    #[error("Tor network error: {0}")]
+    TorError(String),
+
+    #[error("Internal server error: {0}")]
+    InternalServerError(String),
 }
 
 impl Error {
     fn get_codes(&self) -> (StatusCode, u16) {
-        match *self {
+        match self {
             // 4XX Errors
-            Error::ParseObjectID(_) => (StatusCode::BAD_REQUEST, 40001),
+            Error::ParseIDError(_) => (StatusCode::BAD_REQUEST, 40001),
             Error::BadRequest(_) => (StatusCode::BAD_REQUEST, 40002),
             Error::NotFound(_) => (StatusCode::NOT_FOUND, 40003),
             Error::Authenticate(AuthenticateError::WrongCredentials) => {
@@ -56,13 +66,17 @@ impl Error {
 
             // 5XX Errors
             Error::Authenticate(AuthenticateError::TokenCreation) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, 5001)
+                (StatusCode::INTERNAL_SERVER_ERROR, 50001)
             }
-            Error::Wither(_) => (StatusCode::INTERNAL_SERVER_ERROR, 5002),
-            Error::Mongo(_) => (StatusCode::INTERNAL_SERVER_ERROR, 5003),
-            Error::SerializeMongoResponse(_) => (StatusCode::INTERNAL_SERVER_ERROR, 5004),
-            Error::RunSyncTask(_) => (StatusCode::INTERNAL_SERVER_ERROR, 5005),
-            Error::HashPassword(_) => (StatusCode::INTERNAL_SERVER_ERROR, 5006),
+            Error::DatabaseError(_) => (StatusCode::INTERNAL_SERVER_ERROR, 50002),
+            Error::RunSyncTask(_) => (StatusCode::INTERNAL_SERVER_ERROR, 50003),
+            Error::HashPassword(_) => (StatusCode::INTERNAL_SERVER_ERROR, 50004),
+            Error::EncryptionError(_) => (StatusCode::INTERNAL_SERVER_ERROR, 50005),
+            Error::DecryptionError(_) => (StatusCode::INTERNAL_SERVER_ERROR, 50006),
+            Error::PGPError(_) => (StatusCode::INTERNAL_SERVER_ERROR, 50007),
+            Error::CryptoError(_) => (StatusCode::INTERNAL_SERVER_ERROR, 50008),
+            Error::TorError(_) => (StatusCode::INTERNAL_SERVER_ERROR, 50009),
+            Error::InternalServerError(_) => (StatusCode::INTERNAL_SERVER_ERROR, 50010),
         }
     }
 
@@ -72,6 +86,21 @@ impl Error {
 
     pub fn not_found() -> Self {
         Error::NotFound(NotFound {})
+    }
+}
+
+impl From<Box<dyn StdError>> for Error {
+    fn from(err: Box<dyn StdError>) -> Self {
+        Error::InternalServerError(err.to_string())
+    }
+}
+
+impl From<DieselError> for Error {
+    fn from(err: DieselError) -> Self {
+        match err {
+            DieselError::NotFound => Error::not_found(),
+            _ => Error::DatabaseError(err.to_string()),
+        }
     }
 }
 

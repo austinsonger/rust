@@ -18,8 +18,8 @@ pub struct Logger {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Database {
-    pub uri: String,
-    pub name: String,
+    pub url: String,
+    pub pool_size: u32,
 }
 
 #[derive(Debug, Clone, Deserialize)]

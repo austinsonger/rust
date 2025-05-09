@@ -1,5 +1,5 @@
 [package]
-name = "rustapi"
+name = "tor_marketplace"
 version = "0.1.0"
 authors = ["ndelvalle <nicolas.delvalle@gmail.com>"]
 edition = "2021"
@@ -9,9 +9,6 @@ config = "0.14.0"
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = "1.0.133"
 serde_derive = "1.0.152"
-# Wait for wither to relase a new version.
-# https://github.com/thedodd/wither/pull/89#issuecomment-1023644443
-wither = { git = "https://github.com/thedodd/wither", rev = "52fd503" }
 futures = "0.3.30"
 thiserror = "1.0.63"
 axum = { version = "0.7.5" }
@@ -25,17 +22,37 @@ tower-http = { version = "0.6", features = [
   "sensitive-headers",
   "cors",
 ] }
-chrono = "0.4.38"
+chrono = { version = "0.4.38", features = ["serde"] }
 async-trait = "0.1.81"
-# Investigate if wither::bson can be used instead and activate this feature.
-bson = { version = "2.10.0", features = ["serde_with", "chrono-0_4"] }
 jsonwebtoken = "9.3.0"
 once_cell = "1.20.0"
-bcrypt = "0.15.1"
 validator = { version = "0.18.1", features = ["derive"] }
 mime = "0.3.17"
 bytes = "1.7.2"
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
+
+# Database
+diesel = { version = "2.1.4", features = ["postgres", "chrono", "r2d2", "uuid"] }
+diesel_migrations = "2.1.0"
+r2d2 = "0.8.10"
+
+# Security
+argon2 = "0.5.3"
+rand = "0.8.5"
+rustls = "0.22.2"
+libsodium-sys = "0.2.7"
+sodiumoxide = "0.2.7"
+pgp = "0.10.2"
+bitcoin = "0.31.1"
+monero = "0.20.0"
+
+# Templating
+askama = "0.12.1"
+askama_axum = "0.4.0"
+
+# Tor
+arti-client = "0.12.0"
+tor-rtcompat = "0.9.6"
 
 [dev-dependencies]
 assert-json-diff = "2.0.2"

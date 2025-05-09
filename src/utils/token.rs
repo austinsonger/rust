@@ -1,4 +1,3 @@
-use bson::oid::ObjectId;
 use jsonwebtoken::{errors::Error, DecodingKey, EncodingKey, Header, TokenData, Validation};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
@@ -12,17 +11,17 @@ static HEADER: Lazy<Header> = Lazy::new(Header::default);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TokenUser {
-    pub id: ObjectId,
-    pub name: String,
-    pub email: String,
+    pub id: i32,
+    pub username: String,
+    pub role: String,
 }
 
 impl From<User> for TokenUser {
     fn from(user: User) -> Self {
         Self {
-            id: user.id.unwrap(),
-            name: user.name.clone(),
-            email: user.email,
+            id: user.id,
+            username: user.username.clone(),
+            role: user.role.clone(),
         }
     }
 }
@@ -37,8 +36,8 @@ pub struct Claims {
 impl Claims {
     pub fn new(user: User) -> Self {
         Self {
-            exp: (chrono::Local::now() + chrono::Duration::days(30)).timestamp() as usize,
-            iat: chrono::Local::now().timestamp() as usize,
+            exp: (chrono::Utc::now() + chrono::Duration::days(30)).timestamp() as usize,
+            iat: chrono::Utc::now().timestamp() as usize,
             user: TokenUser::from(user),
         }
     }

@@ -1,10 +1,11 @@
 mod utils;
 
 use std::net::SocketAddr;
+use std::path::PathBuf;
 use axum::{
     extract::{Path, Query},
     http::StatusCode,
-    response::{IntoResponse, Json},
+    response::{IntoResponse, Json, Html},
     routing::{get, post, put, delete},
     Router,
 };
@@ -13,6 +14,7 @@ use tracing::{debug, error, info};
 use tower_http::{
     trace::TraceLayer,
     compression::CompressionLayer,
+    services::ServeDir,
 };
 
 use utils::dry_example::{
@@ -101,7 +103,14 @@ async fn main() {
 
     // Create a router with our routes
     let app = Router::new()
-        // Original routes
+        // Frontend routes
+        .route("/", get(home))
+        .route("/login", get(login))
+        .route("/register", get(register))
+        .route("/products", get(products))
+        .route("/product/:id", get(product_detail))
+
+        // Original API routes
         .route("/users/:id", get(get_user))
         .route("/products/:id", get(get_product))
 
@@ -117,6 +126,9 @@ async fn main() {
         .route("/api/products", post(|body| create_resource(body, create_product, "product")))
         .route("/api/products/:id", put(|path, body| update_resource(path, body, update_product, "product")))
         .route("/api/products/:id", delete(|path| delete_resource(path, delete_product, "product")))
+
+        // Serve static files
+        .nest_service("/static", ServeDir::new(PathBuf::from("static")))
 
         // Add middleware
         .layer(TraceLayer::new_for_http())
@@ -206,4 +218,33 @@ fn update_product(id: u32, product: Product) -> Result<Product, String> {
 fn delete_product(id: u32) -> Result<(), String> {
     // In a real app, this would delete from a database
     Ok(())
+}
+
+// Frontend route handlers
+async fn home() -> impl IntoResponse {
+    Html(include_str!("../static/index.html"))
+}
+
+async fn login() -> impl IntoResponse {
+    Html(include_str!("../static/login.html"))
+}
+
+async fn register() -> impl IntoResponse {
+    Html(include_str!("../static/register.html"))
+}
+
+#[derive(Deserialize)]
+struct ProductsQuery {
+    page: Option<i32>,
+    category: Option<i32>,
+    search: Option<String>,
+    currency: Option<String>,
+}
+
+async fn products(_query: Query<ProductsQuery>) -> impl IntoResponse {
+    Html(include_str!("../static/products.html"))
+}
+
+async fn product_detail(Path(_id): Path<i32>) -> impl IntoResponse {
+    Html(include_str!("../static/product_detail.html"))
 }

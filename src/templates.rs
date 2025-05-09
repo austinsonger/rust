@@ -3,147 +3,56 @@ use axum::{
     http::StatusCode,
     response::{Html, IntoResponse, Response},
 };
-use chrono::{DateTime, Utc};
 use serde::Serialize;
-
-// Base template context that all templates will inherit
-#[derive(Template)]
-#[template(path = "layouts/base.html")]
-struct BaseTemplate {
-    user: Option<UserContext>,
-    current_year: i32,
-}
 
 // Home page template
 #[derive(Template)]
 #[template(path = "pages/home.html")]
 pub struct HomeTemplate {
-    user: Option<UserContext>,
-    current_year: i32,
+    pub user: Option<UserContext>,
+    pub current_year: i32,
 }
 
 // Login page template
 #[derive(Template)]
 #[template(path = "pages/login.html")]
 pub struct LoginTemplate {
-    user: Option<UserContext>,
-    current_year: i32,
-    error: Option<String>,
-    pgp_challenge: Option<String>,
+    pub user: Option<UserContext>,
+    pub current_year: i32,
+    pub error: Option<String>,
+    pub pgp_challenge: Option<String>,
 }
 
 // Register page template
 #[derive(Template)]
 #[template(path = "pages/register.html")]
 pub struct RegisterTemplate {
-    user: Option<UserContext>,
-    current_year: i32,
-    error: Option<String>,
+    pub user: Option<UserContext>,
+    pub current_year: i32,
+    pub error: Option<String>,
 }
 
 // Products page template
 #[derive(Template)]
 #[template(path = "pages/products.html")]
 pub struct ProductsTemplate {
-    user: Option<UserContext>,
-    current_year: i32,
-    products: Vec<ProductContext>,
-    categories: Vec<CategoryContext>,
-    currency: String,
-    page: i32,
-    total_pages: i32,
+    pub user: Option<UserContext>,
+    pub current_year: i32,
+    pub products: Vec<ProductContext>,
+    pub categories: Vec<CategoryContext>,
+    pub currency: String,
+    pub page: i32,
+    pub total_pages: i32,
 }
 
 // Product detail page template
 #[derive(Template)]
 #[template(path = "pages/product_detail.html")]
 pub struct ProductDetailTemplate {
-    user: Option<UserContext>,
-    current_year: i32,
-    product: ProductDetailContext,
-    currency: String,
-}
-
-// Profile page template
-#[derive(Template)]
-#[template(path = "pages/profile.html")]
-pub struct ProfileTemplate {
-    user: UserContext,
-    current_year: i32,
-    wallets: WalletsContext,
-    orders: Vec<OrderContext>,
-    conversations: Vec<ConversationContext>,
-}
-
-// Security settings page template
-#[derive(Template)]
-#[template(path = "pages/security.html")]
-pub struct SecurityTemplate {
-    user: UserContext,
-    current_year: i32,
-    password_success: Option<String>,
-    password_error: Option<String>,
-    pgp_success: Option<String>,
-    pgp_error: Option<String>,
-    recovery_key: Option<String>,
-    login_history: Vec<LoginHistoryContext>,
-}
-
-// Wallet page template
-#[derive(Template)]
-#[template(path = "pages/wallet.html")]
-pub struct WalletTemplate {
-    user: UserContext,
-    current_year: i32,
-    wallets: WalletsContext,
-    transactions: Vec<TransactionContext>,
-    page: i32,
-    total_pages: i32,
-}
-
-// Messages page template
-#[derive(Template)]
-#[template(path = "pages/messages.html")]
-pub struct MessagesTemplate {
-    user: UserContext,
-    current_year: i32,
-    conversations: Vec<ConversationContext>,
-    active_conversation: Option<ConversationDetailContext>,
-}
-
-// Orders page template
-#[derive(Template)]
-#[template(path = "pages/orders.html")]
-pub struct OrdersTemplate {
-    user: UserContext,
-    current_year: i32,
-    orders: Vec<OrderContext>,
-    page: i32,
-    total_pages: i32,
-}
-
-// Order detail page template
-#[derive(Template)]
-#[template(path = "pages/order_detail.html")]
-pub struct OrderDetailTemplate {
-    user: UserContext,
-    current_year: i32,
-    order: OrderDetailContext,
-}
-
-// Vendor dashboard template
-#[derive(Template)]
-#[template(path = "pages/vendor_dashboard.html")]
-pub struct VendorDashboardTemplate {
-    user: UserContext,
-    current_year: i32,
-    vendor: VendorContext,
-    stats: VendorStatsContext,
-    recent_orders: Vec<OrderContext>,
-    top_products: Vec<ProductContext>,
-    low_stock_products: Vec<ProductContext>,
-    recent_reviews: Vec<ReviewContext>,
-    vendor_bond: Option<VendorBondContext>,
+    pub user: Option<UserContext>,
+    pub current_year: i32,
+    pub product: ProductDetailContext,
+    pub currency: String,
 }
 
 // Context structs for templates

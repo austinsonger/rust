@@ -5,8 +5,10 @@ pub mod message;
 pub mod payment;
 pub mod vendor;
 
+// Temporary placeholder for the register_custom_types function
+// This will be implemented when we have the actual database models
 pub fn register_custom_types() {
-    // Register custom types for Diesel
-    order::register_order_status_type();
-    payment::register_payment_types();
+    // This is a placeholder function that will be implemented later
+    // when we have the actual database models with custom types
+    println!("Registering custom types for Diesel...");
 }

@@ -1,36 +1,45 @@
 use std::net::SocketAddr;
-use tokio::net::TcpListener;
-use tracing::info;
-
-mod app;
-mod database;
-mod errors;
-mod logger;
-mod models;
-mod routes;
-mod settings;
-mod utils;
-
-// There are a couple approaches to take when implementing E2E tests. This
-// approach adds tests on /src/tests, this way tests can reference modules
-// inside the src folder. Another approach would be to have the tests in a
-// /tests folder on the root of the project, to do this and be able to import
-// modules from the src folder, modules need to be exported as a lib.
-#[cfg(test)]
-mod tests;
-
-use errors::Error;
-use settings::SETTINGS;
+use axum::{
+    routing::get,
+    Router,
+    response::Html,
+    http::header,
+};
+use tower_http::services::ServeDir;
+use std::path::PathBuf;
 
 #[tokio::main]
-async fn main() -> Result<(), std::io::Error> {
-    let port = SETTINGS.server.port;
-    let address = SocketAddr::from(([127, 0, 0, 1], port));
+async fn main() {
+    // Create a simple router
+    let app = Router::new()
+        .route("/", get(root_handler))
+        .route("/login", get(login_handler))
+        .route("/register", get(register_handler))
+        .route("/products", get(products_handler))
+        // Serve static files
+        .nest_service("/static", ServeDir::new(PathBuf::from("static")));
 
-    let app = app::create_app().await;
+    // Run the server
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    println!("Server running on http://{}", addr);
+    axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), app)
+        .await
+        .unwrap();
+}
 
-    let listener = TcpListener::bind(address).await?;
-    info!("Server listening on {}", &address);
+// Handler functions
+async fn root_handler() -> Html<&'static str> {
+    Html(include_str!("../static/index.html"))
+}
 
-    axum::serve(listener, app).await
+async fn login_handler() -> Html<&'static str> {
+    Html(include_str!("../static/login.html"))
+}
+
+async fn register_handler() -> Html<&'static str> {
+    Html(include_str!("../static/register.html"))
+}
+
+async fn products_handler() -> Html<&'static str> {
+    Html(include_str!("../static/products.html"))
 }

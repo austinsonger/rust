@@ -1,8 +1,9 @@
 use axum::http::header;
 use axum::Router;
+use std::path::PathBuf;
 use tower_http::{
     compression::CompressionLayer, cors::CorsLayer, propagate_header::PropagateHeaderLayer,
-    sensitive_headers::SetSensitiveHeadersLayer, trace,
+    sensitive_headers::SetSensitiveHeadersLayer, services::ServeDir, trace,
 };
 
 use crate::database;
@@ -21,6 +22,7 @@ pub async fn create_app() -> Router {
 
     // Create the router with all routes
     Router::new()
+        .merge(routes::frontend::create_route())
         .merge(routes::status::create_route())
         .merge(routes::user::create_route())
         .merge(routes::product::create_route())
@@ -28,6 +30,8 @@ pub async fn create_app() -> Router {
         .merge(routes::message::create_route())
         .merge(routes::payment::create_route())
         .merge(routes::vendor::create_route())
+        // Serve static files
+        .nest_service("/static", ServeDir::new(PathBuf::from("static")))
         // High level logging of requests and responses
         .layer(
             trace::TraceLayer::new_for_http()

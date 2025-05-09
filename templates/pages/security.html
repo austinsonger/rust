@@ -1,0 +1,196 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Security Settings - Secure Marketplace{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">Security Settings</h1>
+    
+    <div class="space-y-8">
+        <!-- Password Change -->
+        <div class="dark-card rounded-lg overflow-hidden">
+            <div class="p-6">
+                <h2 class="text-xl font-semibold mb-4">Change Password</h2>
+                
+                {% if password_success %}
+                <div class="bg-green-900 text-green-300 p-3 rounded mb-4">
+                    {{ password_success }}
+                </div>
+                {% endif %}
+                
+                {% if password_error %}
+                <div class="bg-red-900 text-red-300 p-3 rounded mb-4">
+                    {{ password_error }}
+                </div>
+                {% endif %}
+                
+                <form hx-post="/profile/security/password" hx-swap="outerHTML" class="space-y-4">
+                    <div>
+                        <label for="current_password" class="block text-sm font-medium mb-1">Current Password</label>
+                        <input type="password" id="current_password" name="current_password" required
+                            class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label for="new_password" class="block text-sm font-medium mb-1">New Password</label>
+                        <input type="password" id="new_password" name="new_password" required
+                            class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <p class="mt-1 text-xs text-gray-400">Use a strong password with at least 12 characters, including numbers and special characters.</p>
+                    </div>
+                    
+                    <div>
+                        <label for="confirm_password" class="block text-sm font-medium mb-1">Confirm New Password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" required
+                            class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+                            Update Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- PGP Key Management -->
+        <div class="dark-card rounded-lg overflow-hidden">
+            <div class="p-6">
+                <h2 class="text-xl font-semibold mb-4">PGP Key Management</h2>
+                
+                {% if pgp_success %}
+                <div class="bg-green-900 text-green-300 p-3 rounded mb-4">
+                    {{ pgp_success }}
+                </div>
+                {% endif %}
+                
+                {% if pgp_error %}
+                <div class="bg-red-900 text-red-300 p-3 rounded mb-4">
+                    {{ pgp_error }}
+                </div>
+                {% endif %}
+                
+                {% if user.pgp_public_key %}
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="text-sm font-medium">Current PGP Public Key</div>
+                        <div class="text-xs text-gray-400">Added on {{ user.pgp_added_date }}</div>
+                    </div>
+                    <pre class="bg-gray-800 p-3 rounded text-xs overflow-x-auto">{{ user.pgp_public_key }}</pre>
+                </div>
+                
+                <form hx-post="/profile/security/pgp/remove" hx-swap="outerHTML" class="mb-6">
+                    <div>
+                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md">
+                            Remove PGP Key
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="pt-6 border-t border-gray-700">
+                    <h3 class="text-lg font-medium mb-3">Update PGP Key</h3>
+                {% else %}
+                <div class="mb-4">
+                    <div class="flex items-center mb-2">
+                        <div class="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
+                        <div class="text-sm font-medium">PGP 2FA is not enabled</div>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                        Adding a PGP key enables two-factor authentication and encrypted communications, significantly enhancing your account security.
+                    </p>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium mb-3">Add PGP Key</h3>
+                {% endif %}
+                
+                    <form hx-post="/profile/security/pgp" hx-swap="outerHTML" class="space-y-4">
+                        <div>
+                            <label for="pgp_public_key" class="block text-sm font-medium mb-1">PGP Public Key</label>
+                            <textarea id="pgp_public_key" name="pgp_public_key" rows="8" required
+                                class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                            <p class="mt-1 text-xs text-gray-400">
+                                Paste your PGP public key here. 
+                                <a href="/pgp-guide" class="text-indigo-400 hover:text-indigo-300">Learn how to create a PGP key</a>
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+                                {% if user.pgp_public_key %}Update{% else %}Add{% endif %} PGP Key
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Account Recovery -->
+        <div class="dark-card rounded-lg overflow-hidden">
+            <div class="p-6">
+                <h2 class="text-xl font-semibold mb-4">Account Recovery</h2>
+                
+                <div class="mb-4">
+                    <p class="text-sm text-gray-400">
+                        Generate a recovery key that can be used to regain access to your account if you lose your password or PGP key.
+                        Store this key in a secure location.
+                    </p>
+                </div>
+                
+                {% if recovery_key %}
+                <div class="mb-6">
+                    <div class="text-sm font-medium mb-2">Your Recovery Key</div>
+                    <div class="bg-gray-800 p-3 rounded text-center">
+                        <code class="text-lg font-mono">{{ recovery_key }}</code>
+                    </div>
+                    <p class="mt-2 text-xs text-red-400">
+                        This key will only be shown once. Please save it in a secure location.
+                    </p>
+                </div>
+                {% endif %}
+                
+                <form hx-post="/profile/security/recovery-key" hx-swap="outerHTML">
+                    <div>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+                            Generate Recovery Key
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Login History -->
+        <div class="dark-card rounded-lg overflow-hidden">
+            <div class="p-6">
+                <h2 class="text-xl font-semibold mb-4">Login History</h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left text-gray-400 text-sm">
+                                <th class="pb-3">Date & Time</th>
+                                <th class="pb-3">IP Address</th>
+                                <th class="pb-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for login in login_history %}
+                            <tr class="border-t border-gray-700">
+                                <td class="py-3">{{ login.timestamp }}</td>
+                                <td class="py-3">{{ login.ip_address }}</td>
+                                <td class="py-3">
+                                    <span class="px-2 py-1 text-xs rounded
+                                        {% if login.success %}bg-green-900 text-green-300{% else %}bg-red-900 text-red-300{% endif %}">
+                                        {% if login.success %}Success{% else %}Failed{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

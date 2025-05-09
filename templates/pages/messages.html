@@ -1,0 +1,191 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Messages - Secure Marketplace{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">Messages</h1>
+    
+    <div class="flex flex-col md:flex-row gap-6">
+        <!-- Conversations List -->
+        <div class="w-full md:w-1/3">
+            <div class="dark-card rounded-lg overflow-hidden">
+                <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                    <h2 class="font-semibold">Conversations</h2>
+                    <button class="text-indigo-400 hover:text-indigo-300"
+                            hx-get="/messages/new" hx-target="#message-content" hx-swap="innerHTML">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="overflow-y-auto max-h-[calc(100vh-250px)]">
+                    {% for conversation in conversations %}
+                    <a href="/messages/{{ conversation.id }}" 
+                       class="block p-4 border-b border-gray-700 hover:bg-gray-800 {% if conversation.id == active_conversation.id %}bg-gray-800{% endif %}"
+                       hx-get="/messages/{{ conversation.id }}" hx-target="#message-content" hx-swap="innerHTML">
+                        <div class="flex justify-between items-center">
+                            <div class="font-medium">{{ conversation.other_username }}</div>
+                            <div class="text-xs text-gray-400">{{ conversation.last_message_time }}</div>
+                        </div>
+                        <div class="text-sm text-gray-400 truncate mt-1">{{ conversation.last_message }}</div>
+                        {% if conversation.unread_count > 0 %}
+                        <div class="mt-2">
+                            <span class="bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">{{ conversation.unread_count }} new</span>
+                        </div>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Message Content -->
+        <div id="message-content" class="w-full md:w-2/3">
+            {% if active_conversation %}
+            <div class="dark-card rounded-lg overflow-hidden flex flex-col h-[calc(100vh-150px)]">
+                <!-- Conversation Header -->
+                <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                    <div>
+                        <h2 class="font-semibold">{{ active_conversation.other_username }}</h2>
+                        {% if active_conversation.other_user_is_vendor %}
+                        <div class="text-xs text-gray-400">Vendor</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if active_conversation.other_user_pgp_key %}
+                        <button class="text-indigo-400 hover:text-indigo-300 mr-2" title="View PGP Key"
+                                onclick="showPgpModal('{{ active_conversation.other_username }}', '{{ active_conversation.other_user_pgp_key }}')">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v-1l1-1 1-1-.257-.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        {% endif %}
+                        
+                        {% if active_conversation.related_order %}
+                        <a href="/orders/{{ active_conversation.related_order.id }}" class="text-indigo-400 hover:text-indigo-300" title="View Related Order">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Messages -->
+                <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+                    {% for message in active_conversation.messages %}
+                    <div class="flex {% if message.is_from_me %}justify-end{% endif %}">
+                        <div class="max-w-[80%] {% if message.is_from_me %}bg-indigo-900{% else %}bg-gray-800{% endif %} rounded-lg p-3">
+                            <div class="text-sm">{{ message.content }}</div>
+                            <div class="text-xs text-gray-400 mt-1 text-right">{{ message.created_at }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Message Input -->
+                <div class="p-4 border-t border-gray-700">
+                    <form hx-post="/messages/{{ active_conversation.id }}" hx-swap="none" hx-on::after-request="this.reset(); document.getElementById('messages-container').scrollTop = document.getElementById('messages-container').scrollHeight;">
+                        <div class="flex space-x-2">
+                            <input type="text" name="message" placeholder="Type your message..." required
+                                   class="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+                                Send
+                            </button>
+                        </div>
+                        
+                        <div class="mt-2 flex items-center">
+                            <input type="checkbox" id="encrypt_pgp" name="encrypt_pgp" class="h-4 w-4 bg-gray-800 border-gray-700 rounded">
+                            <label for="encrypt_pgp" class="ml-2 text-sm">Encrypt with recipient's PGP key</label>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="dark-card rounded-lg p-6 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                <h2 class="text-xl font-semibold mb-2">No Conversation Selected</h2>
+                <p class="text-gray-400 mb-6">Select a conversation from the list or start a new one.</p>
+                <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md"
+                        hx-get="/messages/new" hx-target="#message-content" hx-swap="innerHTML">
+                    Start New Conversation
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- PGP Key Modal -->
+<div id="pgp-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="dark-card rounded-lg p-6 max-w-lg w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="pgp-modal-title" class="text-xl font-semibold">PGP Public Key</h3>
+            <button onclick="closePgpModal()" class="text-gray-400 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        
+        <pre id="pgp-key-content" class="bg-gray-800 p-3 rounded text-xs overflow-x-auto mb-4"></pre>
+        
+        <div class="flex justify-between">
+            <button onclick="copyPgpKey()" class="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md">
+                Copy to Clipboard
+            </button>
+            <button onclick="closePgpModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Scroll to bottom of messages on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const messagesContainer = document.getElementById('messages-container');
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    });
+    
+    function showPgpModal(username, pgpKey) {
+        document.getElementById('pgp-modal-title').textContent = `${username}'s PGP Public Key`;
+        document.getElementById('pgp-key-content').textContent = pgpKey;
+        document.getElementById('pgp-modal').classList.remove('hidden');
+    }
+    
+    function closePgpModal() {
+        document.getElementById('pgp-modal').classList.add('hidden');
+    }
+    
+    function copyPgpKey() {
+        const pgpKey = document.getElementById('pgp-key-content').textContent;
+        navigator.clipboard.writeText(pgpKey).then(() => {
+            alert('PGP key copied to clipboard');
+        });
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('pgp-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePgpModal();
+        }
+    });
+    
+    // Set up polling for new messages
+    setInterval(() => {
+        const activeConversationId = '{{ active_conversation.id }}';
+        if (activeConversationId) {
+            htmx.ajax('GET', `/messages/${activeConversationId}/poll`, {target: '#messages-container', swap: 'innerHTML'});
+        }
+    }, 10000); // Poll every 10 seconds
+</script>
+{% endblock %}

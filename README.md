@@ -1,30 +1,67 @@
-# rustapi
+# Secure Tor Marketplace
 
-[![Tests](https://github.com/ndelvalle/rustapi/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/ndelvalle/rustapi/actions/workflows/test.yml)
+A secure, privacy-focused marketplace built on the Tor network.
 
-RESTful API template built with Rust lang. It uses [MongoDB](https://docs.mongodb.com/)
-database and [Axum](https://github.com/tokio-rs/axum) HTTP framework.
+## Features
 
-### Requirements
+- Anonymous registration (no email required)
+- PGP-based 2FA
+- Multi-signature escrow system
+- End-to-end encrypted messaging
+- Cryptocurrency support (BTC, XMR)
+- Tor network integration
 
-- [Rust](https://www.rust-lang.org/tools/install)
-- [MongoDB](https://docs.mongodb.com/manual/installation/)
+## Running the Application
 
-### How to use this template
+### Prerequisites
 
-To use this template as your project starting point, click "Use this template" at the top of this page, or click [here](https://github.com/ndelvalle/rustapi/generate).
+- Rust and Cargo (https://www.rust-lang.org/tools/install)
 
-### Feature highlights
+### Quick Start
 
-* Authentication. Based on [jsonwebtoken](https://github.com/Keats/jsonwebtoken)
-* Layered configuration. Based on [config-rs](https://github.com/mehcode/config-rs)
-* Logs. Based on [tracing](https://github.com/tokio-rs/tracing)
-* Error handling
-* Pagination
-* E2E Tests
-* OpenAPI Specification
-* CI based on Github actions
-* Dependabot configuration
+1. Run the application using the provided script:
+
+```bash
+./run_app.sh
+```
+
+2. Open your browser and navigate to `http://localhost:3000`
+
+3. You can also view specific pages:
+   - Home: http://localhost:3000/
+   - Login: http://localhost:3000/login
+   - Register: http://localhost:3000/register
+   - Products: http://localhost:3000/products
+
+### Manual Start
+
+If the script doesn't work, you can run the application manually:
+
+```bash
+# Build the application
+cargo build
+
+# Run the application
+cargo run
+```
+
+## Project Structure
+
+- `src/` - Rust source code
+- `static/` - Static HTML, CSS, and image files
+- `templates/` - HTML templates (for future implementation)
+
+## Current Status
+
+This is a simplified version of the application with static HTML pages. The full version will include:
+
+- Database integration with PostgreSQL
+- User authentication with JWT and PGP-based 2FA
+- Product management
+- Order processing
+- Encrypted messaging system
+- Cryptocurrency wallet integration
+- Tor network integration
 
 ### Project structure
 
@@ -67,7 +104,7 @@ To use this template as your project starting point, click "Use this template" a
 To run tests make sure MongoDB is up and running.
 ```
 make test
-``` 
+```
 
 ## Contributing
 

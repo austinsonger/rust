@@ -1,0 +1,326 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Order #{{ order.id }} - Secure Marketplace{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Order #{{ order.id }}</h1>
+        <span class="px-3 py-1 text-sm rounded
+            {% if order.status == 'completed' %}bg-green-900 text-green-300
+            {% elif order.status == 'pending' %}bg-yellow-900 text-yellow-300
+            {% elif order.status == 'cancelled' %}bg-red-900 text-red-300
+            {% elif order.status == 'disputed' %}bg-orange-900 text-orange-300
+            {% else %}bg-blue-900 text-blue-300{% endif %}">
+            {{ order.status|capitalize }}
+        </span>
+    </div>
+    
+    <!-- Order Summary -->
+    <div class="dark-card rounded-lg overflow-hidden mb-6">
+        <div class="p-6">
+            <div class="grid md:grid-cols-3 gap-6 mb-6">
+                <div>
+                    <div class="text-sm text-gray-400 mb-1">Order Date</div>
+                    <div>{{ order.created_at }}</div>
+                </div>
+                
+                <div>
+                    <div class="text-sm text-gray-400 mb-1">Total Amount</div>
+                    <div class="font-semibold">{{ order.total_amount }} {{ order.currency|upper }}</div>
+                </div>
+                
+                <div>
+                    <div class="text-sm text-gray-400 mb-1">Payment Status</div>
+                    <div>{{ order.payment_status|capitalize }}</div>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <div class="text-sm text-gray-400 mb-1">Vendor</div>
+                    <div class="flex items-center">
+                        <a href="/vendors/{{ order.vendor.id }}" class="text-indigo-400 hover:text-indigo-300">
+                            {{ order.vendor.username }}
+                        </a>
+                        {% if order.vendor.is_verified %}
+                        <span class="ml-2 bg-green-900 text-green-300 text-xs px-2 py-1 rounded">Verified</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="text-sm text-gray-400 mb-1">Shipping Method</div>
+                    <div>{{ order.shipping_method }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order Items -->
+    <div class="dark-card rounded-lg overflow-hidden mb-6">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold mb-4">Order Items</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="text-left text-gray-400 text-sm">
+                            <th class="pb-3">Product</th>
+                            <th class="pb-3">Variant</th>
+                            <th class="pb-3">Price</th>
+                            <th class="pb-3">Quantity</th>
+                            <th class="pb-3">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order.items %}
+                        <tr class="border-t border-gray-700">
+                            <td class="py-3">
+                                <a href="/products/{{ item.product_id }}" class="text-indigo-400 hover:text-indigo-300">
+                                    {{ item.product_title }}
+                                </a>
+                            </td>
+                            <td class="py-3">
+                                {% if item.variant_title %}{{ item.variant_title }}{% else %}-{% endif %}
+                            </td>
+                            <td class="py-3">{{ item.price_per_unit }} {{ order.currency|upper }}</td>
+                            <td class="py-3">{{ item.quantity }}</td>
+                            <td class="py-3">{{ item.total_price }} {{ order.currency|upper }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="border-t border-gray-700">
+                            <td colspan="4" class="py-3 text-right font-medium">Subtotal:</td>
+                            <td class="py-3">{{ order.subtotal }} {{ order.currency|upper }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="py-3 text-right font-medium">Shipping:</td>
+                            <td class="py-3">{{ order.shipping_cost }} {{ order.currency|upper }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="py-3 text-right font-medium">Escrow Fee:</td>
+                            <td class="py-3">{{ order.escrow_fee }} {{ order.currency|upper }}</td>
+                        </tr>
+                        <tr class="border-t border-gray-700">
+                            <td colspan="4" class="py-3 text-right font-semibold">Total:</td>
+                            <td class="py-3 font-semibold">{{ order.total_amount }} {{ order.currency|upper }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Shipping Information -->
+    <div class="dark-card rounded-lg overflow-hidden mb-6">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold mb-4">Shipping Information</h2>
+            
+            <div class="mb-4">
+                <div class="text-sm text-gray-400 mb-1">Encrypted Shipping Address</div>
+                <pre class="bg-gray-800 p-3 rounded text-xs overflow-x-auto">{{ order.encrypted_shipping_address }}</pre>
+                <p class="mt-2 text-sm text-gray-400">
+                    This shipping address is encrypted with the vendor's PGP key and can only be decrypted by them.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <div class="text-sm text-gray-400 mb-1">Shipping Method</div>
+                    <div>{{ order.shipping_method }}</div>
+                </div>
+                
+                <div>
+                    <div class="text-sm text-gray-400 mb-1">Estimated Delivery</div>
+                    <div>{{ order.estimated_delivery }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Payment Information -->
+    <div class="dark-card rounded-lg overflow-hidden mb-6">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold mb-4">Payment Information</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <div class="text-sm text-gray-400 mb-1">Payment Method</div>
+                    <div>{{ order.currency|upper }} ({{ order.currency_name }})</div>
+                </div>
+                
+                <div>
+                    <div class="text-sm text-gray-400 mb-1">Payment Status</div>
+                    <div>{{ order.payment_status|capitalize }}</div>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <div class="text-sm text-gray-400 mb-1">Escrow Address</div>
+                <div class="bg-gray-800 p-3 rounded text-sm font-mono break-all">{{ order.escrow_address }}</div>
+            </div>
+            
+            {% if order.status == 'pending' %}
+            <div class="mb-6">
+                <div class="text-sm text-gray-400 mb-1">Payment Instructions</div>
+                <div class="bg-gray-800 p-3 rounded">
+                    <p class="mb-2">Please send <strong>{{ order.total_amount }} {{ order.currency|upper }}</strong> to the escrow address above.</p>
+                    <p class="mb-2">The funds will be held in escrow until you confirm receipt of your order.</p>
+                    <p class="text-sm text-yellow-400">Important: Send exactly the amount specified. Sending less will delay your order processing.</p>
+                </div>
+            </div>
+            
+            <div class="flex justify-center">
+                <button class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md"
+                        hx-post="/orders/{{ order.id }}/pay" hx-swap="none">
+                    Pay Now from Wallet
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Order Status Timeline -->
+    <div class="dark-card rounded-lg overflow-hidden mb-6">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold mb-4">Order Timeline</h2>
+            
+            <div class="relative">
+                <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-700"></div>
+                
+                <div class="space-y-6">
+                    {% for event in order.status_history %}
+                    <div class="relative pl-10">
+                        <div class="absolute left-0 top-1.5 w-8 h-8 rounded-full bg-gray-800 border-2 
+                            {% if event.status == 'completed' %}border-green-500
+                            {% elif event.status == 'cancelled' %}border-red-500
+                            {% elif event.status == 'disputed' %}border-orange-500
+                            {% else %}border-indigo-500{% endif %} flex items-center justify-center">
+                            {% if event.status == 'pending' %}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                            </svg>
+                            {% elif event.status == 'paid' %}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
+                            </svg>
+                            {% elif event.status == 'processing' %}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clip-rule="evenodd" />
+                            </svg>
+                            {% elif event.status == 'shipped' %}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                                <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
+                            </svg>
+                            {% elif event.status == 'delivered' %}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z" />
+                            </svg>
+                            {% elif event.status == 'completed' %}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            {% elif event.status == 'cancelled' %}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                            {% elif event.status == 'disputed' %}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-orange-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between">
+                                <h3 class="font-medium">{{ event.status|capitalize }}</h3>
+                                <span class="text-sm text-gray-400">{{ event.created_at }}</span>
+                            </div>
+                            {% if event.notes %}
+                            <p class="text-sm text-gray-400 mt-1">{{ event.notes }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="flex flex-wrap gap-3 mb-8">
+        <a href="/orders" class="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md">
+            Back to Orders
+        </a>
+        
+        {% if order.status == 'pending' %}
+        <button class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md"
+                hx-post="/orders/{{ order.id }}/pay" hx-swap="none">
+            Pay Now
+        </button>
+        
+        <button class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md"
+                hx-post="/orders/{{ order.id }}/cancel" hx-swap="none">
+            Cancel Order
+        </button>
+        {% endif %}
+        
+        {% if order.status == 'shipped' %}
+        <button class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md"
+                hx-post="/orders/{{ order.id }}/confirm" hx-swap="none">
+            Confirm Receipt
+        </button>
+        {% endif %}
+        
+        {% if order.status != 'cancelled' and order.status != 'disputed' and order.status != 'completed' %}
+        <button class="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-md"
+                hx-post="/orders/{{ order.id }}/dispute" hx-swap="none">
+            Open Dispute
+        </button>
+        {% endif %}
+        
+        {% if order.status == 'completed' and not order.has_review %}
+        <a href="/orders/{{ order.id }}/review" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+            Leave Review
+        </a>
+        {% endif %}
+        
+        <a href="/messages/vendor/{{ order.vendor.id }}?order={{ order.id }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+            Message Vendor
+        </a>
+    </div>
+    
+    <!-- Review Section -->
+    {% if order.review %}
+    <div class="dark-card rounded-lg overflow-hidden">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold mb-4">Your Review</h2>
+            
+            <div class="mb-2">
+                <div class="flex text-yellow-400">
+                    {% for i in range(5) %}
+                    {% if i < order.review.rating %}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    {% else %}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="text-sm text-gray-400 mb-2">Posted on {{ order.review.created_at }}</div>
+            
+            <div>{{ order.review.comment }}</div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

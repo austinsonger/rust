@@ -1,0 +1,72 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Register - Secure Marketplace{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto dark-card rounded-lg shadow-lg overflow-hidden">
+    <div class="p-6">
+        <h2 class="text-2xl font-bold text-center mb-6">Create an Account</h2>
+        
+        {% if error %}
+        <div class="bg-red-900 text-white p-3 rounded mb-4">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <form hx-post="/users" hx-swap="outerHTML" class="space-y-4">
+            <div>
+                <label for="username" class="block text-sm font-medium mb-1">Username</label>
+                <input type="text" id="username" name="username" required
+                    class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <p class="mt-1 text-xs text-gray-400">Choose a unique username. This will be your identity on the marketplace.</p>
+            </div>
+            
+            <div>
+                <label for="password" class="block text-sm font-medium mb-1">Password</label>
+                <input type="password" id="password" name="password" required
+                    class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <p class="mt-1 text-xs text-gray-400">Use a strong password with at least 12 characters, including numbers and special characters.</p>
+            </div>
+            
+            <div>
+                <label for="password_confirm" class="block text-sm font-medium mb-1">Confirm Password</label>
+                <input type="password" id="password_confirm" name="password_confirm" required
+                    class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            
+            <div>
+                <label for="pgp_public_key" class="block text-sm font-medium mb-1">PGP Public Key (Optional)</label>
+                <textarea id="pgp_public_key" name="pgp_public_key" rows="5"
+                    class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                <p class="mt-1 text-xs text-gray-400">
+                    Adding your PGP public key enables 2FA and encrypted communications.
+                    <a href="/pgp-guide" class="text-indigo-400 hover:text-indigo-300">Learn how to create a PGP key</a>
+                </p>
+            </div>
+            
+            <div class="flex items-center">
+                <input type="checkbox" id="terms" name="terms" required class="h-4 w-4 bg-gray-800 border-gray-700 rounded">
+                <label for="terms" class="ml-2 block text-sm">
+                    I agree to the 
+                    <a href="/terms" class="text-indigo-400 hover:text-indigo-300">Terms of Service</a>
+                    and
+                    <a href="/privacy" class="text-indigo-400 hover:text-indigo-300">Privacy Policy</a>
+                </label>
+            </div>
+            
+            <div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                    Register
+                </button>
+            </div>
+        </form>
+        
+        <div class="mt-6 text-center">
+            <p class="text-sm text-gray-400">
+                Already have an account? 
+                <a href="/login" class="text-indigo-400 hover:text-indigo-300">Login</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

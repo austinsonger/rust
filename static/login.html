@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Secure Marketplace</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        .dark-card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-gray-900 text-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <a href="/" class="text-xl font-bold">Secure Marketplace</a>
+            </div>
+            
+            <nav class="hidden md:flex space-x-6">
+                <a href="/" class="hover:text-gray-300">Home</a>
+                <a href="/products" class="hover:text-gray-300">Products</a>
+                <a href="/vendors" class="hover:text-gray-300">Vendors</a>
+            </nav>
+            
+            <div class="flex items-center space-x-4">
+                <a href="/login" class="hover:text-gray-300">Login</a>
+                <a href="/register" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md">Register</a>
+            </div>
+        </div>
+    </header>
+    
+    <main class="flex-grow container mx-auto px-4 py-6">
+        <div class="max-w-md mx-auto dark-card rounded-lg shadow-lg overflow-hidden">
+            <div class="p-6">
+                <h2 class="text-2xl font-bold text-center mb-6">Login to Your Account</h2>
+                
+                <form class="space-y-4">
+                    <div>
+                        <label for="username" class="block text-sm font-medium mb-1">Username</label>
+                        <input type="text" id="username" name="username" required
+                            class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div>
+                        <label for="password" class="block text-sm font-medium mb-1">Password</label>
+                        <input type="password" id="password" name="password" required
+                            class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="remember" name="remember" class="h-4 w-4 bg-gray-800 border-gray-700 rounded">
+                            <label for="remember" class="ml-2 block text-sm">Remember me</label>
+                        </div>
+                        
+                        <a href="/forgot-password" class="text-sm text-indigo-400 hover:text-indigo-300">Forgot password?</a>
+                    </div>
+                    
+                    <div>
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800">
+                            Login
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-400">
+                        Don't have an account? 
+                        <a href="/register" class="text-indigo-400 hover:text-indigo-300">Register now</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="bg-gray-900 text-white py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between">
+                <div class="mb-4 md:mb-0">
+                    <h3 class="text-lg font-semibold mb-2">Secure Marketplace</h3>
+                    <p class="text-gray-400">Privacy-focused, secure trading platform</p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-8">
+                    <div>
+                        <h4 class="text-md font-semibold mb-2">Resources</h4>
+                        <ul class="space-y-2 text-gray-400">
+                            <li><a href="/faq" class="hover:text-white">FAQ</a></li>
+                            <li><a href="/security" class="hover:text-white">Security</a></li>
+                            <li><a href="/pgp-guide" class="hover:text-white">PGP Guide</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-md font-semibold mb-2">Legal</h4>
+                        <ul class="space-y-2 text-gray-400">
+                            <li><a href="/terms" class="hover:text-white">Terms of Service</a></li>
+                            <li><a href="/privacy" class="hover:text-white">Privacy Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 pt-6 border-t border-gray-800 text-center text-gray-400">
+                <p>&copy; 2024 Secure Marketplace. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Alpine.js for dropdowns -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</body>
+</html>

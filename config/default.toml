@@ -1,0 +1,18 @@
+environment = "development"
+
+[server]
+port = 3000
+
+[logger]
+level = "debug"
+
+[database]
+url = "postgres://postgres:postgres@localhost/tor_marketplace"
+pool_size = 5
+
+[auth]
+secret = "your-secret-key-for-jwt-tokens-change-this-in-production"
+
+[tor]
+enabled = false
+service_dir = "./tor_service"

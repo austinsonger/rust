@@ -27,6 +27,18 @@ pub struct Auth {
     pub secret: String,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct Tor {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default = "default_tor_service_dir")]
+    pub service_dir: String,
+}
+
+fn default_tor_service_dir() -> String {
+    "./tor_service".to_string()
+}
+
 // Remove the #[allow(dead_code)] attribute from the Settings struct when all the fields are being
 // used.
 #[allow(dead_code)]
@@ -37,6 +49,7 @@ pub struct Settings {
     pub logger: Logger,
     pub database: Database,
     pub auth: Auth,
+    pub tor: Tor,
 }
 
 impl Settings {

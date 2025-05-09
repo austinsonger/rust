@@ -1,0 +1,208 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Orders - Secure Marketplace{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">Your Orders</h1>
+    
+    <!-- Order Filters -->
+    <div class="dark-card rounded-lg p-4 mb-6">
+        <form hx-get="/orders" hx-target="#orders-container" hx-swap="innerHTML" class="flex flex-wrap gap-4">
+            <div>
+                <label for="status" class="block text-sm font-medium mb-1">Status</label>
+                <select id="status" name="status" class="bg-gray-800 border border-gray-700 rounded-md px-3 py-1 text-sm">
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="paid">Paid</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="disputed">Disputed</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="currency" class="block text-sm font-medium mb-1">Currency</label>
+                <select id="currency" name="currency" class="bg-gray-800 border border-gray-700 rounded-md px-3 py-1 text-sm">
+                    <option value="all">All Currencies</option>
+                    <option value="btc">Bitcoin (BTC)</option>
+                    <option value="xmr">Monero (XMR)</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="time_period" class="block text-sm font-medium mb-1">Time Period</label>
+                <select id="time_period" name="time_period" class="bg-gray-800 border border-gray-700 rounded-md px-3 py-1 text-sm">
+                    <option value="all">All Time</option>
+                    <option value="week">Last Week</option>
+                    <option value="month">Last Month</option>
+                    <option value="3months">Last 3 Months</option>
+                    <option value="year">Last Year</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="sort" class="block text-sm font-medium mb-1">Sort By</label>
+                <select id="sort" name="sort" class="bg-gray-800 border border-gray-700 rounded-md px-3 py-1 text-sm">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="amount_high">Amount: High to Low</option>
+                    <option value="amount_low">Amount: Low to High</option>
+                </select>
+            </div>
+            
+            <div class="flex items-end">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1 px-4 rounded-md">
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Orders List -->
+    <div id="orders-container" class="space-y-6">
+        {% if orders and orders|length > 0 %}
+            {% for order in orders %}
+            <div class="dark-card rounded-lg overflow-hidden">
+                <div class="p-4 border-b border-gray-700 flex flex-wrap justify-between items-center">
+                    <div>
+                        <div class="flex items-center">
+                            <h2 class="font-semibold">Order #{{ order.id }}</h2>
+                            <span class="ml-3 px-2 py-1 text-xs rounded
+                                {% if order.status == 'completed' %}bg-green-900 text-green-300
+                                {% elif order.status == 'pending' %}bg-yellow-900 text-yellow-300
+                                {% elif order.status == 'cancelled' %}bg-red-900 text-red-300
+                                {% elif order.status == 'disputed' %}bg-orange-900 text-orange-300
+                                {% else %}bg-blue-900 text-blue-300{% endif %}">
+                                {{ order.status|capitalize }}
+                            </span>
+                        </div>
+                        <div class="text-sm text-gray-400 mt-1">Placed on {{ order.created_at }}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-medium">
+                            {{ order.total_amount }} {{ order.currency|upper }}
+                        </div>
+                        <div class="text-sm text-gray-400 mt-1">
+                            {{ order.item_count }} item{% if order.item_count != 1 %}s{% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <div class="mb-4">
+                        <div class="text-sm font-medium mb-2">Items</div>
+                        <div class="space-y-2">
+                            {% for item in order.items %}
+                            <div class="flex justify-between">
+                                <div>
+                                    <a href="/products/{{ item.product_id }}" class="text-indigo-400 hover:text-indigo-300">
+                                        {{ item.product_title }}
+                                    </a>
+                                    {% if item.variant_title %}
+                                    <span class="text-gray-400"> - {{ item.variant_title }}</span>
+                                    {% endif %}
+                                    <span class="text-gray-400"> × {{ item.quantity }}</span>
+                                </div>
+                                <div>
+                                    {{ item.price_per_unit }} {{ order.currency|upper }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-3 gap-4 text-sm">
+                        <div>
+                            <div class="text-gray-400 mb-1">Vendor</div>
+                            <a href="/vendors/{{ order.vendor_id }}" class="text-indigo-400 hover:text-indigo-300">
+                                {{ order.vendor_name }}
+                            </a>
+                        </div>
+                        
+                        <div>
+                            <div class="text-gray-400 mb-1">Shipping Method</div>
+                            <div>{{ order.shipping_method }}</div>
+                        </div>
+                        
+                        <div>
+                            <div class="text-gray-400 mb-1">Escrow Address</div>
+                            <div class="truncate">{{ order.escrow_address }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        <a href="/orders/{{ order.id }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+                            View Details
+                        </a>
+                        
+                        {% if order.status == 'pending' %}
+                        <button class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md"
+                                hx-post="/orders/{{ order.id }}/pay" hx-swap="none">
+                            Pay Now
+                        </button>
+                        
+                        <button class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md"
+                                hx-post="/orders/{{ order.id }}/cancel" hx-swap="none">
+                            Cancel Order
+                        </button>
+                        {% endif %}
+                        
+                        {% if order.status == 'shipped' %}
+                        <button class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md"
+                                hx-post="/orders/{{ order.id }}/confirm" hx-swap="none">
+                            Confirm Receipt
+                        </button>
+                        {% endif %}
+                        
+                        {% if order.status != 'cancelled' and order.status != 'disputed' and order.status != 'completed' %}
+                        <button class="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-4 rounded-md"
+                                hx-post="/orders/{{ order.id }}/dispute" hx-swap="none">
+                            Open Dispute
+                        </button>
+                        {% endif %}
+                        
+                        <a href="/messages/vendor/{{ order.vendor_id }}" class="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md">
+                            Message Vendor
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <div class="mt-8 flex justify-center">
+                <nav class="flex items-center space-x-2">
+                    {% if page > 1 %}
+                    <a href="?page={{ page - 1 }}" class="px-3 py-1 rounded-md bg-gray-800 hover:bg-gray-700">Previous</a>
+                    {% endif %}
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                    <a href="?page={{ p }}" class="px-3 py-1 rounded-md {% if p == page %}bg-indigo-600{% else %}bg-gray-800 hover:bg-gray-700{% endif %}">{{ p }}</a>
+                    {% endfor %}
+                    
+                    {% if page < total_pages %}
+                    <a href="?page={{ page + 1 }}" class="px-3 py-1 rounded-md bg-gray-800 hover:bg-gray-700">Next</a>
+                    {% endif %}
+                </nav>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="dark-card rounded-lg p-8 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                <h2 class="text-xl font-semibold mb-2">No Orders Found</h2>
+                <p class="text-gray-400 mb-6">You haven't placed any orders yet.</p>
+                <a href="/products" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+                    Browse Products
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

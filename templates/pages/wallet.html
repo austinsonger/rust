@@ -1,0 +1,232 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Wallet - Secure Marketplace{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">Your Wallet</h1>
+    
+    <!-- Wallet Balances -->
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <div class="dark-card rounded-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Bitcoin (BTC)</h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.31 15.5c-1.8 0-5.5-.73-5.5-2.5s2.93-1.95 3.5-1.5c.23.18.28.43.28.43l1.27-.42s-.15-.66-.53-.88c-.38-.23-.83-.33-1.55-.33-1.15 0-2.85.65-2.85 2.25 0 1.71 1.73 2.75 4.5 2.75s4.5-1.04 4.5-2.75c0-1.6-1.7-2.25-2.85-2.25-.72 0-1.17.1-1.55.33-.38.22-.53.88-.53.88l1.27.42s.05-.25.28-.43c.57-.45 3.5.27 3.5 1.5s-3.7 2.5-5.5 2.5z"/>
+                </svg>
+            </div>
+            
+            <div class="text-3xl font-bold mb-4">{{ wallets.btc.balance }} BTC</div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md"
+                        hx-get="/wallet/btc/deposit" hx-target="#wallet-action-container" hx-swap="innerHTML">
+                    Deposit
+                </button>
+                <button class="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md"
+                        hx-get="/wallet/btc/withdraw" hx-target="#wallet-action-container" hx-swap="innerHTML">
+                    Withdraw
+                </button>
+            </div>
+            
+            <div class="text-sm text-gray-400">
+                <div class="flex justify-between mb-1">
+                    <span>Available:</span>
+                    <span>{{ wallets.btc.available }} BTC</span>
+                </div>
+                <div class="flex justify-between mb-1">
+                    <span>Pending:</span>
+                    <span>{{ wallets.btc.pending }} BTC</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>In Escrow:</span>
+                    <span>{{ wallets.btc.in_escrow }} BTC</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dark-card rounded-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Monero (XMR)</h2>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                    <path d="M12 6l-4 4h2v4h4v-4h2z"/>
+                </svg>
+            </div>
+            
+            <div class="text-3xl font-bold mb-4">{{ wallets.xmr.balance }} XMR</div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md"
+                        hx-get="/wallet/xmr/deposit" hx-target="#wallet-action-container" hx-swap="innerHTML">
+                    Deposit
+                </button>
+                <button class="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md"
+                        hx-get="/wallet/xmr/withdraw" hx-target="#wallet-action-container" hx-swap="innerHTML">
+                    Withdraw
+                </button>
+            </div>
+            
+            <div class="text-sm text-gray-400">
+                <div class="flex justify-between mb-1">
+                    <span>Available:</span>
+                    <span>{{ wallets.xmr.available }} XMR</span>
+                </div>
+                <div class="flex justify-between mb-1">
+                    <span>Pending:</span>
+                    <span>{{ wallets.xmr.pending }} XMR</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>In Escrow:</span>
+                    <span>{{ wallets.xmr.in_escrow }} XMR</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Wallet Action Container -->
+    <div id="wallet-action-container" class="mb-8"></div>
+    
+    <!-- Transaction History -->
+    <div class="dark-card rounded-lg overflow-hidden">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold">Transaction History</h2>
+                <div class="flex space-x-2">
+                    <select id="currency-filter" class="bg-gray-800 border border-gray-700 rounded-md px-3 py-1 text-sm"
+                            hx-get="/wallet/transactions" hx-target="#transactions-container" hx-swap="innerHTML" hx-trigger="change">
+                        <option value="all">All Currencies</option>
+                        <option value="btc">Bitcoin (BTC)</option>
+                        <option value="xmr">Monero (XMR)</option>
+                    </select>
+                    <select id="type-filter" class="bg-gray-800 border border-gray-700 rounded-md px-3 py-1 text-sm"
+                            hx-get="/wallet/transactions" hx-target="#transactions-container" hx-swap="innerHTML" hx-trigger="change">
+                        <option value="all">All Types</option>
+                        <option value="deposit">Deposits</option>
+                        <option value="withdrawal">Withdrawals</option>
+                        <option value="escrow">Escrow</option>
+                        <option value="fee">Fees</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="transactions-container" class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="text-left text-gray-400 text-sm">
+                            <th class="pb-3">Date</th>
+                            <th class="pb-3">Type</th>
+                            <th class="pb-3">Amount</th>
+                            <th class="pb-3">Fee</th>
+                            <th class="pb-3">Status</th>
+                            <th class="pb-3">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tx in transactions %}
+                        <tr class="border-t border-gray-700">
+                            <td class="py-3">{{ tx.created_at }}</td>
+                            <td class="py-3">
+                                <span class="capitalize">{{ tx.transaction_type }}</span>
+                            </td>
+                            <td class="py-3 {% if tx.transaction_type == 'deposit' %}text-green-400{% elif tx.transaction_type == 'withdrawal' or tx.transaction_type == 'fee' %}text-red-400{% endif %}">
+                                {% if tx.transaction_type == 'deposit' %}+{% elif tx.transaction_type == 'withdrawal' or tx.transaction_type == 'fee' %}-{% endif %}
+                                {{ tx.amount }} {{ tx.wallet_type }}
+                            </td>
+                            <td class="py-3 text-red-400">
+                                {% if tx.fee > 0 %}-{{ tx.fee }} {{ tx.wallet_type }}{% else %}-{% endif %}
+                            </td>
+                            <td class="py-3">
+                                <span class="px-2 py-1 text-xs rounded
+                                    {% if tx.status == 'completed' %}bg-green-900 text-green-300
+                                    {% elif tx.status == 'pending' %}bg-yellow-900 text-yellow-300
+                                    {% elif tx.status == 'failed' %}bg-red-900 text-red-300
+                                    {% else %}bg-blue-900 text-blue-300{% endif %}">
+                                    {{ tx.status|capitalize }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                {% if tx.tx_hash %}
+                                <a href="#" class="text-indigo-400 hover:text-indigo-300"
+                                   onclick="showTransactionDetails('{{ tx.id }}')">
+                                    Details
+                                </a>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <div class="mt-6 flex justify-center">
+                <nav class="flex items-center space-x-2">
+                    {% if page > 1 %}
+                    <a href="?page={{ page - 1 }}" class="px-3 py-1 rounded-md bg-gray-800 hover:bg-gray-700">Previous</a>
+                    {% endif %}
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                    <a href="?page={{ p }}" class="px-3 py-1 rounded-md {% if p == page %}bg-indigo-600{% else %}bg-gray-800 hover:bg-gray-700{% endif %}">{{ p }}</a>
+                    {% endfor %}
+                    
+                    {% if page < total_pages %}
+                    <a href="?page={{ page + 1 }}" class="px-3 py-1 rounded-md bg-gray-800 hover:bg-gray-700">Next</a>
+                    {% endif %}
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Details Modal -->
+<div id="transaction-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="dark-card rounded-lg p-6 max-w-lg w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold">Transaction Details</h3>
+            <button onclick="closeTransactionModal()" class="text-gray-400 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        
+        <div id="transaction-details-content" class="space-y-4">
+            <!-- Content will be loaded here -->
+        </div>
+        
+        <div class="mt-6 text-center">
+            <button onclick="closeTransactionModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function showTransactionDetails(txId) {
+        // Load transaction details via HTMX
+        htmx.ajax('GET', `/wallet/transactions/${txId}`, {target: '#transaction-details-content'})
+            .then(() => {
+                document.getElementById('transaction-modal').classList.remove('hidden');
+            });
+    }
+    
+    function closeTransactionModal() {
+        document.getElementById('transaction-modal').classList.add('hidden');
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('transaction-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeTransactionModal();
+        }
+    });
+</script>
+{% endblock %}

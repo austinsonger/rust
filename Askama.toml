@@ -1,0 +1,11 @@
+[general]
+# The directory where templates are found
+dir = "templates"
+# Extension of template files
+extension = "html"
+# Syntax highlighting in editors
+syntax = "html"
+# Whether to escape by default
+escape = true
+# Whether to use the experimental parser
+experimental_parser = false

@@ -5,3 +5,4 @@ pub mod order;
 pub mod message;
 pub mod payment;
 pub mod vendor;
+pub mod frontend;

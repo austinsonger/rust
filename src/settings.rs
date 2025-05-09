@@ -14,6 +14,14 @@ pub struct Server {
 #[derive(Debug, Clone, Deserialize)]
 pub struct Logger {
     pub level: String,
+    #[serde(default = "default_log_format")]
+    pub format: String,
+    #[serde(default)]
+    pub request_id_header: bool,
+}
+
+fn default_log_format() -> String {
+    "text".to_string()
 }
 
 #[derive(Debug, Clone, Deserialize)]

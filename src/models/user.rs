@@ -49,38 +49,139 @@ pub struct UpdateUser {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
+/// Valid user roles
+pub mod roles {
+    pub const ADMIN: &str = "admin";
+    pub const MODERATOR: &str = "moderator";
+    pub const VENDOR: &str = "vendor";
+    pub const BUYER: &str = "buyer";
+
+    /// Check if a role is valid
+    pub fn is_valid(role: &str) -> bool {
+        matches!(role, ADMIN | MODERATOR | VENDOR | BUYER)
+    }
+}
+
 impl User {
-    pub fn new<A, B>(username: A, password_hash: B, pgp_public_key: Option<String>, role: &str) -> NewUser
+    /// Create a new user
+    ///
+    /// # Arguments
+    /// * `username` - The username for the new user
+    /// * `password_hash` - The hashed password for the new user
+    /// * `pgp_public_key` - Optional PGP public key for the user
+    /// * `role` - The role for the new user
+    ///
+    /// # Returns
+    /// * `Result<NewUser, Error>` - The new user or an error
+    pub fn new<A, B>(
+        username: A,
+        password_hash: B,
+        pgp_public_key: Option<String>,
+        role: &str
+    ) -> Result<NewUser, Error>
     where
         A: Into<String>,
         B: Into<String>,
     {
-        NewUser {
-            username: username.into(),
-            password_hash: password_hash.into(),
+        use tracing::{debug, warn};
+
+        let username = username.into();
+        let password_hash = password_hash.into();
+
+        // Validate username
+        if username.is_empty() {
+            return Err(Error::validation_error("Username cannot be empty"));
+        }
+
+        // Validate password hash
+        if password_hash.is_empty() {
+            return Err(Error::validation_error("Password hash cannot be empty"));
+        }
+
+        // Validate role
+        if !roles::is_valid(role) {
+            warn!(role = %role, "Invalid role specified");
+            return Err(Error::validation_error(format!("Invalid role: {}", role)));
+        }
+
+        // Validate PGP key if provided
+        if let Some(ref key) = pgp_public_key {
+            if key.is_empty() {
+                debug!("Empty PGP key provided, setting to None");
+                return Ok(NewUser {
+                    username,
+                    password_hash,
+                    pgp_public_key: None,
+                    role: role.to_string(),
+                });
+            }
+
+            // Basic PGP key validation - should start with "-----BEGIN PGP PUBLIC KEY BLOCK-----"
+            if !key.contains("-----BEGIN PGP PUBLIC KEY BLOCK-----") {
+                return Err(Error::validation_error("Invalid PGP public key format"));
+            }
+        }
+
+        Ok(NewUser {
+            username,
+            password_hash,
             pgp_public_key,
             role: role.to_string(),
+        })
+    }
+
+    /// Check if a password matches the user's password hash
+    ///
+    /// # Arguments
+    /// * `password` - The password to check
+    ///
+    /// # Returns
+    /// * `bool` - Whether the password matches
+    pub fn is_password_match(&self, password: &str) -> bool {
+        use tracing::{debug, error};
+
+        // Validate password
+        if password.is_empty() {
+            debug!("Empty password provided for password match check");
+            return false;
+        }
+
+        match verify_password(password, &self.password_hash, &Argon2::default()) {
+            Ok(result) => result,
+            Err(err) => {
+                error!(
+                    error = %err,
+                    user_id = self.id,
+                    "Error verifying password"
+                );
+                false
+            }
         }
     }
 
-    pub fn is_password_match(&self, password: &str) -> bool {
-        verify_password(password, &self.password_hash, &Argon2::default()).unwrap_or(false)
-    }
-
+    /// Check if the user is an admin
     pub fn is_admin(&self) -> bool {
-        self.role == "admin"
+        self.role == roles::ADMIN
     }
 
+    /// Check if the user is a moderator or admin
     pub fn is_moderator(&self) -> bool {
-        self.role == "moderator" || self.role == "admin"
+        self.role == roles::MODERATOR || self.role == roles::ADMIN
     }
 
+    /// Check if the user is a vendor
     pub fn is_vendor(&self) -> bool {
-        self.role == "vendor"
+        self.role == roles::VENDOR
     }
 
+    /// Check if the user is a buyer
     pub fn is_buyer(&self) -> bool {
-        self.role == "buyer"
+        self.role == roles::BUYER
+    }
+
+    /// Check if the user account is locked
+    pub fn is_account_locked(&self) -> bool {
+        self.is_locked.unwrap_or(false)
     }
 }
 
@@ -115,38 +216,99 @@ pub struct Argon2Config {
 
 impl Default for Argon2Config {
     fn default() -> Self {
+        use crate::constants::security::{
+            DEFAULT_ARGON2_MEMORY_COST,
+            DEFAULT_ARGON2_TIME_COST,
+            DEFAULT_ARGON2_PARALLELISM,
+        };
+
         Self {
-            memory_cost: 65536,
-            time_cost: 3,
-            parallelism: 1,
+            memory_cost: DEFAULT_ARGON2_MEMORY_COST,
+            time_cost: DEFAULT_ARGON2_TIME_COST,
+            parallelism: DEFAULT_ARGON2_PARALLELISM,
         }
     }
 }
 
-pub async fn hash_password<P>(password: P, config: &Argon2Config) -> Result<String, Error>
+/// Hash a password using Argon2id
+///
+/// # Arguments
+/// * `password` - The password to hash
+/// * `config` - The Argon2 configuration to use
+///
+/// # Returns
+/// * `Result<String, Error>` - The hashed password or an error
+pub async fn hash_password<P>(password: P, config: Option<&Argon2Config>) -> Result<String, Error>
 where
     P: AsRef<str> + Send + 'static,
 {
-    let config = config.clone();
+    use tracing::{debug, error};
+
+    // Use the provided config or the default
+    let config = config.cloned().unwrap_or_default();
+
+    // Validate password length
+    if password.as_ref().len() < crate::constants::auth::MIN_PASSWORD_LENGTH {
+        return Err(Error::validation_error(format!(
+            "Password must be at least {} characters long",
+            crate::constants::auth::MIN_PASSWORD_LENGTH
+        )));
+    }
+
+    debug!("Hashing password with Argon2id");
+
+    // Spawn a blocking task to hash the password
     task::spawn_blocking(move || {
         let salt = SaltString::generate(&mut OsRng);
+
+        // Create the Argon2 instance with the specified parameters
         let argon2 = Argon2::new(
             argon2::Algorithm::Argon2id,
             argon2::Version::V0x13,
             argon2::Params::new(config.memory_cost, config.time_cost, config.parallelism, None)
-                .map_err(|e| Error::HashPassword(e.to_string()))?,
+                .map_err(|e| {
+                    error!(error = %e, "Failed to create Argon2 parameters");
+                    Error::HashPassword(e.to_string())
+                })?,
         );
+
+        // Hash the password
         argon2
             .hash_password(password.as_ref().as_bytes(), &salt)
             .map(|hash| hash.to_string())
-            .map_err(|e| Error::HashPassword(e.to_string()))
+            .map_err(|e| {
+                error!(error = %e, "Failed to hash password");
+                Error::HashPassword(e.to_string())
+            })
     })
     .await
-    .map_err(|e| Error::RunSyncTask(e))?
+    .map_err(|e| {
+        error!(error = %e, "Failed to spawn blocking task for password hashing");
+        Error::RunSyncTask(e)
+    })?
 }
 
+/// Verify a password against a hash
+///
+/// # Arguments
+/// * `password` - The password to verify
+/// * `hash` - The hash to verify against
+/// * `argon2` - The Argon2 instance to use
+///
+/// # Returns
+/// * `Result<bool, Error>` - Whether the password matches the hash or an error
 fn verify_password(password: &str, hash: &str, argon2: &Argon2) -> Result<bool, Error> {
-    let parsed_hash = PasswordHash::new(hash).map_err(|e| Error::HashPassword(e.to_string()))?;
+    use tracing::{debug, error};
+
+    debug!("Verifying password");
+
+    // Parse the hash
+    let parsed_hash = PasswordHash::new(hash).map_err(|e| {
+        error!(error = %e, "Failed to parse password hash");
+        Error::HashPassword(e.to_string())
+    })?;
+
+    // Verify the password
     Ok(argon2
         .verify_password(password.as_bytes(), &parsed_hash)
         .is_ok())

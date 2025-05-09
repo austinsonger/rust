@@ -1,45 +1,74 @@
+mod app;
+mod constants;
+mod database;
+mod errors;
+mod logger;
+mod middleware;
+mod models;
+mod routes;
+mod schema;
+mod settings;
+mod templates;
+mod utils;
+
 use std::net::SocketAddr;
-use axum::{
-    routing::get,
-    Router,
-    response::Html,
-    http::header,
-};
-use tower_http::services::ServeDir;
-use std::path::PathBuf;
+use tracing::{error, info};
+
+use crate::settings::SETTINGS;
 
 #[tokio::main]
-async fn main() {
-    // Create a simple router
-    let app = Router::new()
-        .route("/", get(root_handler))
-        .route("/login", get(login_handler))
-        .route("/register", get(register_handler))
-        .route("/products", get(products_handler))
-        // Serve static files
-        .nest_service("/static", ServeDir::new(PathBuf::from("static")));
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create the application
+    let app = app::create_app().await;
 
-    // Run the server
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
-    println!("Server running on http://{}", addr);
-    axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), app)
+    // Set up the server address
+    let addr = SocketAddr::from(([127, 0, 0, 1], SETTINGS.server.port));
+    info!("Server running on http://{}", addr);
+
+    // Start the server
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+
+    // Run the server with graceful shutdown
+    match axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
         .await
-        .unwrap();
+    {
+        Ok(_) => {
+            info!("Server shutdown gracefully");
+            Ok(())
+        }
+        Err(err) => {
+            error!(error = %err, "Server error");
+            Err(Box::new(err))
+        }
+    }
 }
 
-// Handler functions
-async fn root_handler() -> Html<&'static str> {
-    Html(include_str!("../static/index.html"))
-}
+// Graceful shutdown signal handler
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Failed to install Ctrl+C handler");
+    };
 
-async fn login_handler() -> Html<&'static str> {
-    Html(include_str!("../static/login.html"))
-}
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("Failed to install signal handler")
+            .recv()
+            .await;
+    };
 
-async fn register_handler() -> Html<&'static str> {
-    Html(include_str!("../static/register.html"))
-}
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
 
-async fn products_handler() -> Html<&'static str> {
-    Html(include_str!("../static/products.html"))
+    tokio::select! {
+        _ = ctrl_c => {
+            info!("Received Ctrl+C, starting graceful shutdown");
+        },
+        _ = terminate => {
+            info!("Received terminate signal, starting graceful shutdown");
+        },
+    }
 }
